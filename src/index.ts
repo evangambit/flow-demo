@@ -2,7 +2,7 @@ import { StateFlow, Context } from "./flow.js";
 import { CollectionBaseItem } from "./base_collection.js";
 import { NormalNavigationView } from "./nav.js";
 import { TopBar, TopbarItem, TopBarItemType, TopBarItem_SimpleButton, TopBarItem_Title } from "./topbar.js";
-import { TableView } from "./collection.js";
+import { DiffableCollection } from "./diffable-collection.js";
 
 const context = new Context();
 
@@ -91,7 +91,7 @@ function getInboxItems(inboxType: string): StateFlow<Array<InboxItem>> {
   return context.create_state_flow(items, `InboxItems-${inboxType}`);
 }
 
-class InboxView extends TableView<InboxItem> {
+class InboxView extends DiffableCollection<InboxItem> {
   constructor(item: InboxNavigationItem, navStack: StateFlow<Array<TopLevelNavigationItemBase>>) {
     super(getInboxItems(item.inboxType), (inboxItem: InboxItem) => {
       const row = document.createElement("div");

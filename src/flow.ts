@@ -1,4 +1,4 @@
-import { UniqueMinQueue } from "./unique_min_queue.js";
+import { UniqueMinQueue } from "./unique-min-queue.js";
 import { Deque } from "./deque.js";
 
 /**

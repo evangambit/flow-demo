@@ -38,7 +38,7 @@ function differ<T extends CollectionBaseItem>() {
   };
 }
 
-export class TableView<T extends CollectionBaseItem> extends BaseCollectionView<T> {
+export class DiffableCollection<T extends CollectionBaseItem> extends BaseCollectionView<T> {
   content: HTMLElement;
   _diffedConsumer: Consumer<DiffResults<T>>;
   _children: Map<string, HTMLElement>;
@@ -67,7 +67,7 @@ export class TableView<T extends CollectionBaseItem> extends BaseCollectionView<
           this._children.set(item.collectionItemId, child);
         }
       }
-    }, 'TableView.consumer');
+    }, 'DiffableCollection.consumer');
   }
   connectedCallback() {
     this._diffedConsumer.turn_on();
@@ -76,4 +76,4 @@ export class TableView<T extends CollectionBaseItem> extends BaseCollectionView<
     this._diffedConsumer.turn_off();
   }
 }
-customElements.define('table-view', TableView);
+customElements.define('diffable-collection', DiffableCollection);
