@@ -1,5 +1,5 @@
-import { BaseCollectionView, CollectionBaseItem } from "./base_collection";
-import {Consumer, Flow} from "./flow";
+import { BaseCollectionView, CollectionBaseItem } from "./base_collection.js";
+import {Consumer, Flow} from "./flow.js";
 
 const gMouse = {
   down: false,
@@ -52,14 +52,28 @@ export class TableView<T extends CollectionBaseItem> extends BaseCollectionView<
     this.content.style.display = 'block';
 
     this._diffedConsumer = items.map(differ<T>()).consume((deltas: DiffResults<T>) => {
-      // TODO: implement this.
+      console.log('TableView diffed update:', deltas);
+      for (const id of deltas.removed) {
+        const child = this._children.get(id);
+        if (child) {
+          this.content.removeChild(child);
+          this._children.delete(id);
+        }
+      }
+      for (const item of deltas.items) {
+        if (deltas.added.has(item.collectionItemId)) {
+          const child = item2view(item);
+          this.content.appendChild(child);
+          this._children.set(item.collectionItemId, child);
+        }
+      }
     }, 'TableView.consumer');
   }
   connectedCallback() {
-    this._consumer.turn_on();
+    this._diffedConsumer.turn_on();
   }
   disconnectedCallback() {
-    this._consumer.turn_off();
+    this._diffedConsumer.turn_off();
   }
 }
 customElements.define('table-view', TableView);
