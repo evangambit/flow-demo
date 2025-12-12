@@ -1,4 +1,4 @@
-import { Flow, Consumer } from "./primitives/flow.js";
+import { Flow } from "./primitives/flow.js";
 import { BaseCollectionView } from "./base-ui/base_collection.js";
 
 export interface CollectionBaseItem {
@@ -13,13 +13,10 @@ export interface NavigationCarouselItem<T extends CollectionBaseItem> extends Co
   items: Array<T>;
 }
 
-export class BaseNavigationView<T extends CollectionBaseItem> extends BaseCollectionView<T> {
-  protected _update(stack: Array<T>, item2view: (item: T) => HTMLElement) {
-    throw new Error("Implement in subclass");
-  }
-}
-
-export class NormalNavigationView<T extends CollectionBaseItem> extends BaseNavigationView<T> {
+/**
+ * A navigation view that displays one view at a time, as well as a top bar.
+ */
+export class StackNavigationView<T extends CollectionBaseItem>  extends BaseCollectionView<T> {
   _topbar: HTMLElement;
   _contentElement: HTMLElement;
   constructor(stack: Flow<Array<T>>, topbar: HTMLElement, item2view: (item: T) => HTMLElement) {
@@ -71,7 +68,7 @@ export class NormalNavigationView<T extends CollectionBaseItem> extends BaseNavi
     }
   }
 }
-customElements.define("normal-navigation-view", NormalNavigationView);
+customElements.define("stack-navigation-view", StackNavigationView);
 
 
 export class HorizontalStackView<T extends CollectionBaseItem> extends BaseCollectionView<T> {

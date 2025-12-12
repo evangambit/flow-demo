@@ -1,7 +1,7 @@
 import { CollectionBaseItem } from "./base-ui/base_collection.js";
 import { DiffableCollection } from "./base-ui/diffable-collection.js";
 import { StateFlow, Context } from "./primitives/flow.js";
-import { NormalNavigationView } from "./nav.js";
+import { StackNavigationView } from "./nav.js";
 import { TopBar, TopbarItem, TopBarItemType, TopBarItem_SimpleButton, TopBarItem_Title } from "./topbar.js";
 
 const context = new Context();
@@ -138,7 +138,7 @@ customElements.define("conversation-view", ConversationView);
 function main() {
   const navStackFlow = context.create_state_flow<Array<TopLevelNavigationItemBase>>([], "TopLevelNavStack");
   const topbar = new TopBar(navStackFlow.map((navStack) => navStackToTopbarItems(navStackFlow, navStack)));
-  const rootNav = new NormalNavigationView<TopLevelNavigationItemBase>(
+  const rootNav = new StackNavigationView<TopLevelNavigationItemBase>(
     navStackFlow,
     topbar,
     (item: TopLevelNavigationItemBase) => {
