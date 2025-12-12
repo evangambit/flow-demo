@@ -1,6 +1,6 @@
-import { StateFlow, Flow, Consumer, Context } from "./flow.js";
-import { BaseCollectionView, CollectionBaseItem } from "./base_collection.js";
-import { HorizontalStackView, NormalNavigationView } from "./nav.js";
+import { StateFlow, Flow, Consumer, Context } from "./primitives/flow.js";
+import { BaseCollectionView, CollectionBaseItem } from "./base-ui/base_collection.js";
+import { HorizontalStackView } from "./nav.js";
 
 export enum TopBarItemType {
   SimpleButton = "simple-button",

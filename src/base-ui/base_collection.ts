@@ -1,4 +1,4 @@
-import { Flow, Consumer } from "./flow.js";
+import { Flow, Consumer } from "../primitives/flow.js";
 
 export interface CollectionBaseItem {
   collectionItemId: string;

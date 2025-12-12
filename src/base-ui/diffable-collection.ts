@@ -1,5 +1,5 @@
 import { BaseCollectionView, CollectionBaseItem } from "./base_collection.js";
-import {Consumer, Flow} from "./flow.js";
+import { Consumer, Flow } from "../primitives/flow.js";
 
 const gMouse = {
   down: false,

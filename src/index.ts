@@ -1,8 +1,8 @@
-import { StateFlow, Context } from "./flow.js";
-import { CollectionBaseItem } from "./base_collection.js";
+import { CollectionBaseItem } from "./base-ui/base_collection.js";
+import { DiffableCollection } from "./base-ui/diffable-collection.js";
+import { StateFlow, Context } from "./primitives/flow.js";
 import { NormalNavigationView } from "./nav.js";
 import { TopBar, TopbarItem, TopBarItemType, TopBarItem_SimpleButton, TopBarItem_Title } from "./topbar.js";
-import { DiffableCollection } from "./diffable-collection.js";
 
 const context = new Context();
 

@@ -1,5 +1,5 @@
-import { Flow, Consumer } from "./flow.js";
-import { BaseCollectionView } from "./base_collection.js";
+import { Flow, Consumer } from "./primitives/flow.js";
+import { BaseCollectionView } from "./base-ui/base_collection.js";
 
 export interface CollectionBaseItem {
   collectionItemId: string;
