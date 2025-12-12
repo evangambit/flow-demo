@@ -19,6 +19,8 @@ export interface NavigationCarouselItem<T extends CollectionBaseItem> extends Co
 export class StackNavigationView<T extends CollectionBaseItem>  extends BaseCollectionView<T> {
   _topbar: HTMLElement;
   _contentElement: HTMLElement;
+  _viewCache: Map<string, HTMLElement>;
+
   constructor(stack: Flow<Array<T>>, topbar: HTMLElement, item2view: (item: T) => HTMLElement) {
     super(stack, item2view);
     this._topbar = topbar;
@@ -35,37 +37,28 @@ export class StackNavigationView<T extends CollectionBaseItem>  extends BaseColl
     this._contentElement = document.createElement("div");
     this._contentElement.style.flex = "1";
     this.appendChild(this._contentElement);
+    this._viewCache = new Map<string, HTMLElement>();
   }
   protected _update(stack: Array<T>, item2view: (item: T) => HTMLElement) {
     const newIds = stack.map((item) => item.collectionItemId);
-    const id2view: Map<string, HTMLElement> = new Map();
-    for (const child of Array.from(this._contentElement.children)) {
-      const id = child.getAttribute("data-navigation-item-id")!;
-      id2view.set(id, child as HTMLElement);
-    }
+
     // Create new views
     for (const item of stack) {
-      if (!id2view.has(item.collectionItemId)) {
+      if (!this._viewCache.has(item.collectionItemId)) {
         const view = item2view(item);
         view.setAttribute("data-navigation-item-id", item.collectionItemId);
-        this._contentElement.appendChild(view);
-        id2view.set(item.collectionItemId, view);
+        this._viewCache.set(item.collectionItemId, view);
       }
     }
     // Remove old views
-    for (const [id, view] of id2view.entries()) {
+    for (const [id, view] of this._viewCache.entries()) {
       if (!newIds.includes(id)) {
-        this._contentElement.removeChild(view);
+        this._viewCache.delete(id);
       }
     }
-    // Update visibility
-    for (const [id, view] of id2view.entries()) {
-      if (id === newIds[newIds.length - 1]) {
-        view.style.display = "";
-      } else {
-        view.style.display = "none";
-      }
-    }
+
+    const currentlyShowingView = this._contentElement.firstChild as HTMLElement | null;
+    const newTopItem = stack.length > 0 ? stack[stack.length - 1] : null;
   }
 }
 customElements.define("stack-navigation-view", StackNavigationView);
