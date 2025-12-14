@@ -1,5 +1,6 @@
 import { Flow } from "./primitives/flow.js";
 import { BaseCollectionView } from "./base-ui/base_collection.js";
+import { DiffableCollection, DiffResults } from "./base-ui/diffable-collection.js";
 
 export interface CollectionBaseItem {
   collectionItemId: string;
@@ -16,13 +17,14 @@ export interface NavigationCarouselItem<T extends CollectionBaseItem> extends Co
 /**
  * A navigation view that displays one view at a time, as well as a top bar.
  */
-export class StackNavigationView<T extends CollectionBaseItem>  extends BaseCollectionView<T> {
+export class StackNavigationView<T extends CollectionBaseItem>  extends DiffableCollection<T> {
   _topbar: HTMLElement;
   _contentElement: HTMLElement;
-  _viewCache: Map<string, HTMLElement>;
 
   constructor(stack: Flow<Array<T>>, topbar: HTMLElement, item2view: (item: T) => HTMLElement) {
-    super(stack, item2view);
+    super(stack, (diff: DiffResults<T>) => {
+      this.update(diff, item2view);
+    });
     this._topbar = topbar;
     this.style.position = "fixed";
     this.style.top = `${this._topbar.offsetHeight}px`;
@@ -37,28 +39,13 @@ export class StackNavigationView<T extends CollectionBaseItem>  extends BaseColl
     this._contentElement = document.createElement("div");
     this._contentElement.style.flex = "1";
     this.appendChild(this._contentElement);
-    this._viewCache = new Map<string, HTMLElement>();
   }
-  protected _update(stack: Array<T>, item2view: (item: T) => HTMLElement) {
-    const newIds = stack.map((item) => item.collectionItemId);
-
-    // Create new views
-    for (const item of stack) {
-      if (!this._viewCache.has(item.collectionItemId)) {
-        const view = item2view(item);
-        view.setAttribute("data-navigation-item-id", item.collectionItemId);
-        this._viewCache.set(item.collectionItemId, view);
-      }
+  private update(diff: DiffResults<T>, item2view: (item: T) => HTMLElement) {
+    this._contentElement.innerHTML = "";
+    if (diff.items.length === 0) {
+      return;
     }
-    // Remove old views
-    for (const [id, view] of this._viewCache.entries()) {
-      if (!newIds.includes(id)) {
-        this._viewCache.delete(id);
-      }
-    }
-
-    const currentlyShowingView = this._contentElement.firstChild as HTMLElement | null;
-    const newTopItem = stack.length > 0 ? stack[stack.length - 1] : null;
+    this._contentElement.appendChild(item2view(diff.items[diff.items.length - 1]));
   }
 }
 customElements.define("stack-navigation-view", StackNavigationView);

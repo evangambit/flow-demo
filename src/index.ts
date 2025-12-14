@@ -1,11 +1,13 @@
+import { View } from "./base-ui/view.js";
 import { CollectionBaseItem } from "./base-ui/base_collection.js";
-import { DiffableCollection } from "./base-ui/diffable-collection.js";
-import { StateFlow, Context } from "./primitives/flow.js";
+import { TableView } from "./base-ui/diffable-collection.js";
+import { StateFlow, Context, Flow } from "./primitives/flow.js";
 import { StackNavigationView } from "./nav.js";
 import { TopBar, TopbarItem, TopBarItemType, TopBarItem_SimpleButton, TopBarItem_Title } from "./topbar.js";
 
 const context = new Context();
 
+// Navigation types.
 enum TopLevelNavigationItemType {
   Inbox = "inbox",
   Conversation = "conversation",
@@ -15,18 +17,20 @@ interface TopLevelNavigationItemBase extends CollectionBaseItem {
   type: TopLevelNavigationItemType;
 }
 
-interface InboxItem extends CollectionBaseItem {
-  subject: string;
-  sender: string;
-  snippet: string;
-}
-
 interface InboxNavigationItem extends TopLevelNavigationItemBase {
   inboxType: string;
 }
 
 interface ConversationNavigationItem extends TopLevelNavigationItemBase {
-  inboxType: string;
+  conversationId: string;
+}
+
+// Data for each cell in the inbox.
+interface InboxItem extends CollectionBaseItem {
+  conversationId: string;
+  subject: string;
+  sender: string;
+  snippet: string;
 }
 
 function navStackToTopbarItems(
@@ -55,7 +59,7 @@ function navStackToTopbarItems(
       title = `Inbox (${(currentItem as InboxNavigationItem).inboxType})`;
       break;
     case TopLevelNavigationItemType.Conversation:
-      title = `Conversation (${(currentItem as ConversationNavigationItem).inboxType})`;
+      title = `Conversation (${(currentItem as ConversationNavigationItem).conversationId})`;
       break;
   }
   items.push({
@@ -83,6 +87,7 @@ function getInboxItems(inboxType: string): StateFlow<Array<InboxItem>> {
   for (let i = 1; i <= 20; i++) {
     items.push({
       collectionItemId: `inbox-item-${inboxType}-${i}`,
+      conversationId: `conversation-${inboxType}-${i}`,
       subject: `Subject ${i} (${inboxType})`,
       sender: `Sender ${i} (${inboxType})`,
       snippet: `Snippet ${i} (${inboxType})`,
@@ -91,9 +96,25 @@ function getInboxItems(inboxType: string): StateFlow<Array<InboxItem>> {
   return context.create_state_flow(items, `InboxItems-${inboxType}`);
 }
 
-class InboxView extends DiffableCollection<InboxItem> {
-  constructor(item: InboxNavigationItem, navStack: StateFlow<Array<TopLevelNavigationItemBase>>) {
-    super(getInboxItems(item.inboxType), (inboxItem: InboxItem) => {
+interface Conversation {
+  conversationId: string;
+  sender: string;
+  snippet: string;
+  subject: string;
+}
+
+function conversationFlow(conversationId: string): StateFlow<Conversation> {
+  return context.create_state_flow({
+    conversationId: conversationId,
+    sender: `Sender of conversation ${conversationId}`,
+    snippet: `This is the snippet of conversation ${conversationId}`,
+    subject: `Subject of conversation ${conversationId}`,
+  }, `ConversationFlow-${conversationId}`);
+}
+
+class InboxView extends TableView<InboxItem> {
+  constructor(items: StateFlow<Array<InboxItem>>, navStack: StateFlow<Array<TopLevelNavigationItemBase>>) {
+    const item2view = (inboxItem: InboxItem): HTMLElement => {
       const row = document.createElement("div");
       row.style.borderBottom = "1px solid #ccc";
       row.style.padding = "10px";
@@ -111,26 +132,29 @@ class InboxView extends DiffableCollection<InboxItem> {
         const conversationItem: ConversationNavigationItem = {
           collectionItemId: `conversation-${inboxItem.collectionItemId}`,
           type: TopLevelNavigationItemType.Conversation,
-          inboxType: item.inboxType,
+          conversationId: inboxItem.collectionItemId,
         };
         navStack.value = navStack.value.concat([conversationItem]);
       };
       return row;
-    });
+    };
+    super(items, item2view);
   }
 }
 customElements.define("inbox-view", InboxView);
 
-class ConversationView extends HTMLElement {
-  constructor(item: ConversationNavigationItem, navStack: StateFlow<Array<TopLevelNavigationItemBase>>) {
-    super();
-    this.innerText = `Conversation View - ${item.collectionItemId}`;
-    const button = document.createElement("button");
-    button.innerText = "Back to Inbox";
-    button.onclick = () => {
-      navStack.value = navStack.value.filter(navItem => navItem.collectionItemId !== item.collectionItemId);
-    };
-    this.appendChild(button);
+class ConversationView extends View<Conversation> {
+  constructor(conversationFlow: StateFlow<Conversation>, navStack: StateFlow<Array<TopLevelNavigationItemBase>>) {
+    super(conversationFlow.consume((conversation) => {
+      this.innerText = `Conversation View - ${conversation.subject}\nFrom: ${conversation.sender}\n\n${conversation.snippet}`;
+      const button = document.createElement("button");
+      button.innerText = "Back to Inbox";
+      button.onclick = () => {
+        navStack.value = navStack.value.filter(navItem => navItem.collectionItemId !== conversation.conversationId);
+      };
+      this.appendChild(button);      
+      this.style.padding = "10px";
+    }, "ConversationViewConsumer"));
   }
 }
 customElements.define("conversation-view", ConversationView);
@@ -144,9 +168,9 @@ function main() {
     (item: TopLevelNavigationItemBase) => {
       switch (item.type) {
         case TopLevelNavigationItemType.Inbox:
-          return new InboxView(item as InboxNavigationItem, navStackFlow);
+          return new InboxView(getInboxItems((item as InboxNavigationItem).inboxType), navStackFlow);
         case TopLevelNavigationItemType.Conversation:
-          return new ConversationView(item as ConversationNavigationItem, navStackFlow);
+          return new ConversationView(conversationFlow(item.collectionItemId), navStackFlow);
       }
     }
   );

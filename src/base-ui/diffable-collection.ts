@@ -17,57 +17,42 @@ window.addEventListener('mouseup', (e) => {
   gMouse.down = false;
 })
 
-interface DiffResults<T extends CollectionBaseItem> {
+export interface DiffResults<T extends CollectionBaseItem> {
   added: Set<string>;
   removed: Set<string>;
+  oldItems: Array<string>;
   items: Array<T>;
 }
 
-function differ<T extends CollectionBaseItem>() {
-  let cache = new Set<string>();
+function differ<T extends CollectionBaseItem>(): (itemsArr: Array<T>) => DiffResults<T> {
+  let lastArr: Array<string> = [];
   return (itemsArr: Array<T>) => {
-    const itemsSet = new Set(itemsArr.map(item => item.collectionItemId));
-    const addedItems = itemsArr.filter(item => !cache.has(item.collectionItemId));
-    const removedItems = Array.from(cache).filter(item => !itemsSet.has(item));
-    cache = itemsSet;
+    const itemsSet = new Set<string>(itemsArr.map(item => item.collectionItemId));
+    const addedItems = itemsArr.filter(item => !itemsSet.has(item.collectionItemId));
+    const removedItems = Array.from(lastArr).filter(id => !itemsSet.has(id));
+    lastArr = itemsArr.map(item => item.collectionItemId);
     return {
       'added': new Set(addedItems.map(item => item.collectionItemId)),
       'removed': new Set(removedItems.map(item => item)),
+      'oldItems': lastArr,
       'items': itemsArr,
     };
   };
 }
 
-export class DiffableCollection<T extends CollectionBaseItem> extends BaseCollectionView<T> {
+export class DiffableCollection<T extends CollectionBaseItem> extends HTMLElement {
   content: HTMLElement;
   _diffedConsumer: Consumer<DiffResults<T>>;
   _children: Map<string, HTMLElement>;
-  constructor(items: Flow<Array<T>>, item2view: (item: T) => HTMLElement) {
-    super(items, item2view);
+  constructor(items: Flow<Array<T>>, consumeFn: (results: DiffResults<T>) => void) {
+    super();
     this._children = new Map<string, HTMLElement>();
 
     this.content = <HTMLDivElement>document.createElement('div');
     this.appendChild(this.content);
 
     this.content.style.display = 'block';
-
-    this._diffedConsumer = items.map(differ<T>()).consume((deltas: DiffResults<T>) => {
-      console.log('TableView diffed update:', deltas);
-      for (const id of deltas.removed) {
-        const child = this._children.get(id);
-        if (child) {
-          this.content.removeChild(child);
-          this._children.delete(id);
-        }
-      }
-      for (const item of deltas.items) {
-        if (deltas.added.has(item.collectionItemId)) {
-          const child = item2view(item);
-          this.content.appendChild(child);
-          this._children.set(item.collectionItemId, child);
-        }
-      }
-    }, 'DiffableCollection.consumer');
+    this._diffedConsumer = items.map(differ<T>()).consume(consumeFn);
   }
   connectedCallback() {
     this._diffedConsumer.turn_on();
@@ -77,3 +62,16 @@ export class DiffableCollection<T extends CollectionBaseItem> extends BaseCollec
   }
 }
 customElements.define('diffable-collection', DiffableCollection);
+
+export class TableView<T extends CollectionBaseItem> extends DiffableCollection<T> {
+  constructor(items: Flow<Array<T>>, item2view: (item: T) => HTMLElement) {
+    super(items, (diff) => {
+      // TODO: optimize updates based on diff
+      this.content.innerHTML = "";
+      diff.items.forEach((item) => {
+        this.content.appendChild(item2view(item));
+      });
+    });
+  }
+}
+customElements.define("table-view", TableView);
