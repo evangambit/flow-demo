@@ -3,7 +3,7 @@ import { DiffableCollectionView } from "./base-ui/diffable-collection.js";
 import { CollectionBaseItem } from "./base-ui/base-collection.js";
 import { StateFlow, Context } from "./primitives/flow.js";
 import { StackNavigationView } from "./base-ui/stack-navigation-view.js";
-import { TopBar, TopbarItem, TopBarItem_SimpleButton, TopBarItem_Title } from "./topbar.js";
+import { TopBar, TopbarItem } from "./topbar.js";
 
 const starIcon = '/star.svg';
 

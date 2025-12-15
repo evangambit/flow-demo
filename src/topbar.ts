@@ -6,15 +6,6 @@ export interface TopbarItem extends CollectionBaseItem {
   element: HTMLElement;
 }
 
-export interface TopBarItem_SimpleButton extends TopbarItem {
-  label: string;
-  onClick: () => void;
-}
-
-export interface TopBarItem_Title extends TopbarItem {
-  title: string;
-}
-
 export class TopBar extends HorizontalStackView<TopbarItem> {
   constructor(items: Flow<Array<TopbarItem>>) {
     super(items, (item: TopbarItem) => {
