@@ -133,7 +133,6 @@ class InboxView extends DiffableCollectionView<InboxItem> {
       this.style.display = "block";
       const row = document.createElement("div");
       row.style.borderBottom = "1px solid #ccc";
-      row.style.padding = "10px";
       const subject = document.createElement("div");
       subject.innerText = inboxItem.subject;
       subject.style.fontWeight = "bold";
@@ -174,7 +173,6 @@ class ConversationView extends View<Conversation> {
         navStack.value = navStack.value.filter(navItem => navItem.collectionItemId !== conversation.conversationId);
       };
       this.appendChild(button);      
-      this.style.padding = "10px";
     }, "ConversationViewConsumer"));
   }
 }

@@ -20,11 +20,10 @@ export class TopBar extends HorizontalStackView<TopbarItem> {
     super(items, (item: TopbarItem) => {
       return item.element;
     });
-    this.style.justifyContent = "space-around";
-    this.style.alignItems = "center";
-    this.style.height = "50px";
-    this.style.backgroundColor = "#f0f0f0";
-    this.style.borderBottom = "1px solid #ccc";
+    this.content.style.justifyContent = "space-around";
+    this.content.style.alignItems = "center";
+    this.content.style.backgroundColor = "#f0f0f0";
+    this.content.style.borderBottom = "1px solid #ccc";
   }
 }
 customElements.define("top-bar", TopBar);
