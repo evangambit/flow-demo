@@ -1,6 +1,6 @@
 import { Flow } from "./primitives/flow.js";
 import { BaseCollectionView } from "./base-ui/base_collection.js";
-import { DiffableCollection, DiffResults } from "./base-ui/diffable-collection.js";
+import { DiffableCollection, DiffResults, LevensteinOperation } from "./base-ui/diffable-collection.js";
 
 export interface CollectionBaseItem {
   collectionItemId: string;
@@ -17,13 +17,81 @@ export interface NavigationCarouselItem<T extends CollectionBaseItem> extends Co
 /**
  * A navigation view that displays one view at a time, as well as a top bar.
  */
-export class StackNavigationView<T extends CollectionBaseItem>  extends DiffableCollection<T> {
+export class StackNavigationView<T extends CollectionBaseItem> extends DiffableCollection<T> {
   _topbar: HTMLElement;
   _contentElement: HTMLElement;
 
   constructor(stack: Flow<Array<T>>, topbar: HTMLElement, item2view: (item: T) => HTMLElement) {
     super(stack, (diff: DiffResults<T>) => {
-      this.update(diff, item2view);
+      console.log(diff);
+      if (diff.items.length === 0) {
+        this._contentElement.innerHTML = "";
+        return;
+      }
+
+      const mutations = diff.operations.filter(op => op.type === 'insert' || op.type === 'delete');
+      const isPush = mutations.length === 1 &&
+        mutations[0]!.type === 'insert' &&
+        (mutations[0] as LevensteinOperation<T>).aIndex === diff.items.length - 1;
+      const isPop = mutations.length === 1 &&
+        mutations[0]!.type === 'delete' &&
+        (mutations[0] as LevensteinOperation<T>).aIndex === diff.items.length;
+      
+      const oldView = this._contentElement.children[0] as HTMLElement | undefined;
+      const newView = item2view(diff.items[diff.items.length - 1]!);
+      newView.style.position = "relative";
+      newView.style.top = "0";
+      newView.style.left = "0";
+      newView.style.width = "100%";
+      newView.style.height = "100%";
+      this._contentElement.appendChild(newView);
+
+      const dur = 0.2; // seconds
+
+      console.log({ isPush, isPop });
+
+      if (isPush) {
+        newView.style.left = "100%";
+        newView.style.transition = `left ${dur}s ease-in-out`;
+        if (oldView) {
+          oldView.style.left = "0";
+          oldView.style.position = "absolute";
+          oldView.style.transition = `left ${dur}s ease-in-out`;
+        }
+        requestAnimationFrame(() => {
+          newView.style.left = "0";
+          if (oldView) {
+            oldView.style.left = "-100%";
+          }
+          newView.addEventListener("transitionend", () => {
+            if (oldView && oldView.parentElement === this._contentElement) {
+              this._contentElement.removeChild(oldView);
+            }
+          }, { once: true });
+        });
+      } else if (isPop) {
+        newView.style.left = "-100%";
+        newView.style.transition = `left ${dur}s ease-in-out`;
+        if (oldView) {
+          oldView.style.left = "0";
+          oldView.style.position = "absolute";
+          oldView.style.transition = `left ${dur}s ease-in-out`;
+        }
+        requestAnimationFrame(() => {
+          newView.style.left = "0";
+          if (oldView) {
+            oldView.style.left = "100%";
+          }
+          newView.addEventListener("transitionend", () => {
+            if (oldView && oldView.parentElement === this._contentElement) {
+              this._contentElement.removeChild(oldView);
+            }
+          }, { once: true });
+        });
+      } else {
+        this._contentElement.innerHTML = "";
+        this._contentElement.appendChild(item2view(diff.items[diff.items.length - 1]));
+      }
     });
     this._topbar = topbar;
     this.style.position = "fixed";
@@ -38,14 +106,9 @@ export class StackNavigationView<T extends CollectionBaseItem>  extends Diffable
 
     this._contentElement = document.createElement("div");
     this._contentElement.style.flex = "1";
+    this._contentElement.style.position = "relative";
+    this._contentElement.style.overflow = "hidden";
     this.appendChild(this._contentElement);
-  }
-  private update(diff: DiffResults<T>, item2view: (item: T) => HTMLElement) {
-    this._contentElement.innerHTML = "";
-    if (diff.items.length === 0) {
-      return;
-    }
-    this._contentElement.appendChild(item2view(diff.items[diff.items.length - 1]));
   }
 }
 customElements.define("stack-navigation-view", StackNavigationView);

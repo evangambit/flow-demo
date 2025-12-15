@@ -114,7 +114,8 @@ function conversationFlow(conversationId: string): StateFlow<Conversation> {
 
 class InboxView extends TableView<InboxItem> {
   constructor(items: StateFlow<Array<InboxItem>>, navStack: StateFlow<Array<TopLevelNavigationItemBase>>) {
-    const item2view = (inboxItem: InboxItem): HTMLElement => {
+    super(items, (inboxItem: InboxItem): HTMLElement => {
+      this.style.display = "block";
       const row = document.createElement("div");
       row.style.borderBottom = "1px solid #ccc";
       row.style.padding = "10px";
@@ -137,8 +138,7 @@ class InboxView extends TableView<InboxItem> {
         navStack.value = navStack.value.concat([conversationItem]);
       };
       return row;
-    };
-    super(items, item2view);
+    });
   }
 }
 customElements.define("inbox-view", InboxView);
