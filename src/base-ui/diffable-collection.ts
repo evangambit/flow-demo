@@ -1,22 +1,6 @@
-import { BaseCollectionView, CollectionBaseItem } from "./base_collection.js";
-import { Consumer, Flow } from "../primitives/flow.js";
+import { CollectionBaseItem } from "./base-collection.js";
+import { Flow } from "../primitives/flow.js";
 import { View } from "./view.js";
-
-const gMouse = {
-  down: false,
-  downPos: {
-    'x': 0,
-    'y': 0,
-  }
-};
-window.addEventListener('mousedown', (e) => {
-  gMouse.down = true;
-  gMouse.downPos.x = e.clientX;
-  gMouse.downPos.y = e.clientY;
-});
-window.addEventListener('mouseup', (e) => {
-  gMouse.down = false;
-});
 
 export interface LevensteinOperation<T extends CollectionBaseItem> {
   type: 'insert' | 'delete' | 'substitute' | 'equal';
@@ -69,7 +53,7 @@ function levenstein<T extends CollectionBaseItem>(a: Array<T>, b: Array<T>): Arr
   return operations;
 }
 
-function apply_levenstein<T extends CollectionBaseItem>(
+export function apply_levenstein<T extends CollectionBaseItem>(
   operations: Array<LevensteinOperation<T>>,
   insert_fn: (index: number, value: T) => void,
   delete_fn: (index: number) => void,
@@ -99,7 +83,7 @@ export interface DiffResults<T extends CollectionBaseItem> {
   items: Array<T>;
 }
 
-function differ<T extends CollectionBaseItem>(): (itemsArr: Array<T>) => DiffResults<T> {
+export function differ<T extends CollectionBaseItem>(): (itemsArr: Array<T>) => DiffResults<T> {
   let lastArr: Array<T> = [];
   return (itemsArr: Array<T>) => {
     const r = {
@@ -111,18 +95,11 @@ function differ<T extends CollectionBaseItem>(): (itemsArr: Array<T>) => DiffRes
   };
 }
 
-export class DiffableCollection<T extends CollectionBaseItem> extends View<DiffResults<T>> {
+/**
+ * A practical implementation of a diffable collection.
+ */
+export class DiffableCollectionView<T extends CollectionBaseItem>extends View<DiffResults<T>> {
   content: HTMLElement;
-  constructor(items: Flow<Array<T>>, consumeFn: (results: DiffResults<T>) => void) {
-    super(items.map(differ<T>()).consume(consumeFn));
-    this.content = <HTMLDivElement>document.createElement('div');
-    this.appendChild(this.content);
-    this.content.style.display = 'block';
-  }
-}
-customElements.define('diffable-collection', DiffableCollection);
-
-export class TableView<T extends CollectionBaseItem> extends DiffableCollection<T> {
   constructor(items: Flow<Array<T>>, item2view: (item: T) => HTMLElement) {
     const insert_fn = (index: number, value: T) => {
       const view = item2view(value);
@@ -140,11 +117,15 @@ export class TableView<T extends CollectionBaseItem> extends DiffableCollection<
         this.content.replaceChild(item2view(value), child);
       }
     };
-    super(items, (diff) => {
+    super(items.map(differ<T>()).consume((diff: DiffResults<T>) => {
       const operations = diff.operations;
       const items = diff.items;
       apply_levenstein(operations, insert_fn, delete_fn, substitute_fn);
-    });
+    }));
+    this.content = <HTMLDivElement>document.createElement('div');
+    this.appendChild(this.content);
+    this.content.style.display = 'block';
+
   }
 }
-customElements.define("table-view", TableView);
+customElements.define("diffable-collection-view", DiffableCollectionView);

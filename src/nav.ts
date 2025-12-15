@@ -1,6 +1,7 @@
 import { Flow } from "./primitives/flow.js";
-import { BaseCollectionView } from "./base-ui/base_collection.js";
-import { DiffableCollection, DiffResults, LevensteinOperation } from "./base-ui/diffable-collection.js";
+import { BaseCollectionView } from "./base-ui/base-collection.js";
+import { DiffResults, LevensteinOperation, differ } from "./base-ui/diffable-collection.js";
+import { View } from "./base-ui/view.js";
 
 export interface CollectionBaseItem {
   collectionItemId: string;
@@ -17,17 +18,18 @@ export interface NavigationCarouselItem<T extends CollectionBaseItem> extends Co
 /**
  * A navigation view that displays one view at a time, as well as a top bar.
  */
-export class StackNavigationView<T extends CollectionBaseItem> extends DiffableCollection<T> {
+export class StackNavigationView<T extends CollectionBaseItem> extends View<DiffResults<T>> {
   _topbar: HTMLElement;
   _contentElement: HTMLElement;
 
   constructor(stack: Flow<Array<T>>, topbar: HTMLElement, item2view: (item: T) => HTMLElement) {
-    super(stack, (diff: DiffResults<T>) => {
-      console.log(diff);
+    super(stack.map(differ<T>()).consume((diff: DiffResults<T>) => {
       if (diff.items.length === 0) {
         this._contentElement.innerHTML = "";
         return;
       }
+
+      const topItem = diff.items[diff.items.length - 1]!;
 
       const mutations = diff.operations.filter(op => op.type === 'insert' || op.type === 'delete');
       const isPush = mutations.length === 1 &&
@@ -38,17 +40,14 @@ export class StackNavigationView<T extends CollectionBaseItem> extends DiffableC
         (mutations[0] as LevensteinOperation<T>).aIndex === diff.items.length;
       
       const oldView = this._contentElement.children[0] as HTMLElement | undefined;
-      const newView = item2view(diff.items[diff.items.length - 1]!);
+      const newView = item2view(topItem);
       newView.style.position = "relative";
       newView.style.top = "0";
       newView.style.left = "0";
       newView.style.width = "100%";
-      newView.style.height = "100%";
       this._contentElement.appendChild(newView);
 
       const dur = 0.2; // seconds
-
-      console.log({ isPush, isPop });
 
       if (isPush) {
         newView.style.left = "100%";
@@ -92,7 +91,7 @@ export class StackNavigationView<T extends CollectionBaseItem> extends DiffableC
         this._contentElement.innerHTML = "";
         this._contentElement.appendChild(item2view(diff.items[diff.items.length - 1]));
       }
-    });
+    }));
     this._topbar = topbar;
     this.style.position = "fixed";
     this.style.top = `${this._topbar.offsetHeight}px`;
@@ -107,12 +106,10 @@ export class StackNavigationView<T extends CollectionBaseItem> extends DiffableC
     this._contentElement = document.createElement("div");
     this._contentElement.style.flex = "1";
     this._contentElement.style.position = "relative";
-    this._contentElement.style.overflow = "hidden";
     this.appendChild(this._contentElement);
   }
 }
 customElements.define("stack-navigation-view", StackNavigationView);
-
 
 export class HorizontalStackView<T extends CollectionBaseItem> extends BaseCollectionView<T> {
   constructor(items: Flow<Array<T>>, item2view: (item: T) => HTMLElement) {

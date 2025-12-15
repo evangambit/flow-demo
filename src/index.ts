@@ -1,9 +1,12 @@
 import { View } from "./base-ui/view.js";
-import { CollectionBaseItem } from "./base-ui/base_collection.js";
-import { TableView } from "./base-ui/diffable-collection.js";
+import { DiffableCollectionView } from "./base-ui/diffable-collection.js";
+import { BaseCollectionView, CollectionBaseItem } from "./base-ui/base-collection.js";
+import { TableView } from "./base-ui/table.js";
 import { StateFlow, Context, Flow } from "./primitives/flow.js";
 import { StackNavigationView } from "./nav.js";
-import { TopBar, TopbarItem, TopBarItemType, TopBarItem_SimpleButton, TopBarItem_Title } from "./topbar.js";
+import { TopBar, TopbarItem, TopBarItem_SimpleButton, TopBarItem_Title } from "./topbar.js";
+
+const starIcon = '/star.svg';
 
 const context = new Context();
 
@@ -33,6 +36,12 @@ interface InboxItem extends CollectionBaseItem {
   snippet: string;
 }
 
+function make_element(tag: string, fn: (el: HTMLElement) => void): HTMLElement {
+  const el = document.createElement(tag);
+  fn(el);
+  return el;
+}
+
 function navStackToTopbarItems(
   navStackFlow: StateFlow<Array<TopLevelNavigationItemBase>>,
   navStack: Array<TopLevelNavigationItemBase>
@@ -44,12 +53,13 @@ function navStackToTopbarItems(
   if (navStack.length > 1) {
     items.push({
       collectionItemId: "back-button",
-      type: TopBarItemType.SimpleButton,
-      label: "Back",
-      onClick: () => {
-        navStackFlow.value = navStackFlow.value.slice(0, navStackFlow.value.length - 1);
-      },
-    } as TopBarItem_SimpleButton);
+      element: make_element("button", (btn) => {
+        btn.innerText = "Back";
+        btn.onclick = () => {
+          navStackFlow.value = navStackFlow.value.slice(0, navStackFlow.value.length - 1);
+        };
+      }),
+    });
   }
   const currentItem = navStack[navStack.length - 1];
 
@@ -64,18 +74,24 @@ function navStackToTopbarItems(
   }
   items.push({
     collectionItemId: "title",
-    type: TopBarItemType.Title,
-    title: title,
+    element: make_element("div", (div) => {
+      div.innerText = title;
+      div.style.fontWeight = "bold";
+      div.style.fontSize = "18px";
+    }),
   } as TopBarItem_Title);
 
   if (currentItem.type === TopLevelNavigationItemType.Conversation) {
     items.push({
       collectionItemId: "star-button",
-      type: TopBarItemType.SimpleButton,
-      label: "Star",
-      onClick: () => {
-        alert("Star clicked");
-      },
+      element: make_element("button", (btn) => {
+        const starImg = document.createElement("img");
+        starImg.src = starIcon;
+        starImg.style.width = "16px";
+        starImg.style.height = "16px";
+        starImg.style.verticalAlign = "middle";
+        btn.appendChild(starImg);
+      }),
     } as TopBarItem_SimpleButton);
   }
   
@@ -112,7 +128,7 @@ function conversationFlow(conversationId: string): StateFlow<Conversation> {
   }, `ConversationFlow-${conversationId}`);
 }
 
-class InboxView extends TableView<InboxItem> {
+class InboxView extends DiffableCollectionView<InboxItem> {
   constructor(items: StateFlow<Array<InboxItem>>, navStack: StateFlow<Array<TopLevelNavigationItemBase>>) {
     super(items, (inboxItem: InboxItem): HTMLElement => {
       this.style.display = "block";
@@ -148,7 +164,13 @@ class ConversationView extends View<Conversation> {
     super(conversationFlow.consume((conversation) => {
       this.innerText = `Conversation View - ${conversation.subject}\nFrom: ${conversation.sender}\n\n${conversation.snippet}`;
       const button = document.createElement("button");
-      button.innerText = "Back to Inbox";
+      const starImg = document.createElement("img");
+      starImg.src = starIcon;
+      starImg.style.width = "16px";
+      starImg.style.height = "16px";
+      starImg.style.verticalAlign = "middle";
+      button.appendChild(starImg);
+      button.style.marginTop = "10px";
       button.onclick = () => {
         navStack.value = navStack.value.filter(navItem => navItem.collectionItemId !== conversation.conversationId);
       };
