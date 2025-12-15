@@ -1,9 +1,8 @@
 import { View } from "./base-ui/view.js";
 import { DiffableCollectionView } from "./base-ui/diffable-collection.js";
-import { BaseCollectionView, CollectionBaseItem } from "./base-ui/base-collection.js";
-import { TableView } from "./base-ui/table.js";
-import { StateFlow, Context, Flow } from "./primitives/flow.js";
-import { StackNavigationView } from "./nav.js";
+import { CollectionBaseItem } from "./base-ui/base-collection.js";
+import { StateFlow, Context } from "./primitives/flow.js";
+import { StackNavigationView } from "./base-ui/stack-navigation-view.js";
 import { TopBar, TopbarItem, TopBarItem_SimpleButton, TopBarItem_Title } from "./topbar.js";
 
 const starIcon = '/star.svg';
