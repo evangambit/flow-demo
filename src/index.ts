@@ -17,8 +17,8 @@ function make_element(tag: string, fn: (el: HTMLElement) => void): HTMLElement {
 }
 
 function navStackToTopbarItems(
-  navStackFlow: StateFlow<Array<TopLevelNavigationItemBase>>,
-  navStack: Array<TopLevelNavigationItemBase>
+  navStack: Array<TopLevelNavigationItemBase>,
+  navStackFlow: StateFlow<Array<TopLevelNavigationItemBase>>
 ): Array<TopbarItem> {
   if (navStack.length === 0) {
     return [];
@@ -74,7 +74,7 @@ function navStackToTopbarItems(
 
 class RootNav extends StackNavigationView<TopLevelNavigationItemBase> {
   constructor(stackFlow: StateFlow<Array<TopLevelNavigationItemBase>>) {
-    const topbar = new TopBar(stackFlow.map((navStack) => navStackToTopbarItems(stackFlow, navStack)));
+    const topbar = new TopBar(stackFlow.map((navStack) => navStackToTopbarItems(navStack, stackFlow)));
     super(stackFlow, topbar, (item: TopLevelNavigationItemBase) => {
       switch (item.type) {
         case TopLevelNavigationItemType.Inbox:
