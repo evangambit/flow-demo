@@ -1,9 +1,10 @@
 import { View } from "./base-ui/view.js";
 import { DiffableCollectionView } from "./base-ui/diffable-collection.js";
 import { CollectionBaseItem } from "./base-ui/base-collection.js";
-import { StateFlow, Context } from "./primitives/flow.js";
+import { StateFlow, Context, Flow } from "./primitives/flow.js";
 import { StackNavigationView } from "./base-ui/stack-navigation-view.js";
 import { TopBar, TopbarItem } from "./topbar.js";
+import { Conversation, ConversationModel } from "./conversation.js";
 
 const starIcon = '/star.svg';
 
@@ -111,22 +112,6 @@ function getInboxItems(inboxType: string): StateFlow<Array<InboxItem>> {
   return context.create_state_flow(items, `InboxItems-${inboxType}`);
 }
 
-interface Conversation {
-  conversationId: string;
-  sender: string;
-  snippet: string;
-  subject: string;
-}
-
-function conversationFlow(conversationId: string): StateFlow<Conversation> {
-  return context.create_state_flow({
-    conversationId: conversationId,
-    sender: `Sender of conversation ${conversationId}`,
-    snippet: `This is the snippet of conversation ${conversationId}`,
-    subject: `Subject of conversation ${conversationId}`,
-  }, `ConversationFlow-${conversationId}`);
-}
-
 class InboxView extends DiffableCollectionView<InboxItem> {
   constructor(items: StateFlow<Array<InboxItem>>, navStack: StateFlow<Array<TopLevelNavigationItemBase>>) {
     super(items, (inboxItem: InboxItem): HTMLElement => {
@@ -158,7 +143,7 @@ class InboxView extends DiffableCollectionView<InboxItem> {
 customElements.define("inbox-view", InboxView);
 
 class ConversationView extends View<Conversation> {
-  constructor(conversationFlow: StateFlow<Conversation>, navStack: StateFlow<Array<TopLevelNavigationItemBase>>) {
+  constructor(conversationFlow: Flow<Conversation>, navStack: StateFlow<Array<TopLevelNavigationItemBase>>) {
     super(conversationFlow.consume((conversation) => {
       this.innerText = `Conversation View - ${conversation.subject}\nFrom: ${conversation.sender}\n\n${conversation.snippet}`;
       const button = document.createElement("button");
@@ -189,7 +174,7 @@ function main() {
         case TopLevelNavigationItemType.Inbox:
           return new InboxView(getInboxItems((item as InboxNavigationItem).inboxType), navStackFlow);
         case TopLevelNavigationItemType.Conversation:
-          return new ConversationView(conversationFlow(item.collectionItemId), navStackFlow);
+          return new ConversationView(ConversationModel.getConversation(context, item.collectionItemId), navStackFlow);
       }
     }
   );
