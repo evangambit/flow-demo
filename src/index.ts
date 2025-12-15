@@ -5,28 +5,13 @@ import { StateFlow, Context, Flow } from "./primitives/flow.js";
 import { StackNavigationView } from "./base-ui/stack-navigation-view.js";
 import { TopBar, TopbarItem } from "./topbar.js";
 import { Conversation, ConversationModel, InboxItem } from "./conversation.js";
+import { ConversationView } from "./conversation-view.js";
+import { InboxView } from "./inbox-view.js";
+import { ConversationNavigationItem, InboxNavigationItem, TopLevelNavigationItemBase, TopLevelNavigationItemType } from "./nav-item.js";
 
 const starIcon = '/star.svg';
 
 const context = new Context();
-
-// Navigation types.
-enum TopLevelNavigationItemType {
-  Inbox = "inbox",
-  Conversation = "conversation",
-}
-
-interface TopLevelNavigationItemBase extends CollectionBaseItem {
-  type: TopLevelNavigationItemType;
-}
-
-interface InboxNavigationItem extends TopLevelNavigationItemBase {
-  inboxType: string;
-}
-
-interface ConversationNavigationItem extends TopLevelNavigationItemBase {
-  conversationId: string;
-}
 
 function make_element(tag: string, fn: (el: HTMLElement) => void): HTMLElement {
   const el = document.createElement(tag);
@@ -90,52 +75,6 @@ function navStackToTopbarItems(
   return items;
 }
 
-class InboxView extends DiffableCollectionView<InboxItem> {
-  constructor(items: Flow<Array<InboxItem>>, navStack: StateFlow<Array<TopLevelNavigationItemBase>>) {
-    super(items, (inboxItem: InboxItem): HTMLElement => {
-      this.style.display = "block";
-      const row = document.createElement("div");
-      row.style.borderBottom = "1px solid #ccc";
-      const sender = document.createElement("div");
-      sender.innerText = `From: ${inboxItem.sender}`;
-      const snippet = document.createElement("div");
-      snippet.innerText = inboxItem.snippet;
-      row.appendChild(sender);
-      row.appendChild(snippet);
-      row.onclick = () => {
-        const conversationItem: ConversationNavigationItem = {
-          collectionItemId: `conversation-${inboxItem.collectionItemId}`,
-          type: TopLevelNavigationItemType.Conversation,
-          conversationId: inboxItem.collectionItemId,
-        };
-        navStack.value = navStack.value.concat([conversationItem]);
-      };
-      return row;
-    });
-  }
-}
-customElements.define("inbox-view", InboxView);
-
-class ConversationView extends View<Conversation> {
-  constructor(conversationFlow: Flow<Conversation>, navStack: StateFlow<Array<TopLevelNavigationItemBase>>) {
-    super(conversationFlow.consume((conversation) => {
-      this.innerText = `Conversation View - ${conversation.conversationId}\nFrom: ${conversation.sender}\n\n${conversation.messages.join("\n")}`;
-      const button = document.createElement("button");
-      const starImg = document.createElement("img");
-      starImg.src = starIcon;
-      starImg.style.width = "16px";
-      starImg.style.height = "16px";
-      starImg.style.verticalAlign = "middle";
-      button.appendChild(starImg);
-      button.style.marginTop = "10px";
-      button.onclick = () => {
-        navStack.value = navStack.value.filter(navItem => navItem.collectionItemId !== conversation.conversationId);
-      };
-      this.appendChild(button);      
-    }, "ConversationViewConsumer"));
-  }
-}
-customElements.define("conversation-view", ConversationView);
 
 function main() {
   const navStackFlow = context.create_state_flow<Array<TopLevelNavigationItemBase>>([], "TopLevelNavStack");
