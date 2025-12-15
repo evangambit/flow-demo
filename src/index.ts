@@ -78,7 +78,7 @@ function navStackToTopbarItems(
       div.style.fontWeight = "bold";
       div.style.fontSize = "18px";
     }),
-  } as TopBarItem_Title);
+  });
 
   if (currentItem.type === TopLevelNavigationItemType.Conversation) {
     items.push({
@@ -91,7 +91,7 @@ function navStackToTopbarItems(
         starImg.style.verticalAlign = "middle";
         btn.appendChild(starImg);
       }),
-    } as TopBarItem_SimpleButton);
+    });
   }
   
   return items;
