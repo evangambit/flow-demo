@@ -1,5 +1,4 @@
 import { DiffableCollectionView } from "./base-ui/diffable-collection.js";
-import { CollectionBaseItem } from "./base-ui/base-collection.js";
 import { StateFlow, Flow } from "./primitives/flow.js";
 import { InboxItem } from "./conversation.js";
 import { TopLevelNavigationItemType, TopLevelNavigationItemBase, ConversationNavigationItem } from "./nav-item.js";

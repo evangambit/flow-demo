@@ -2,7 +2,6 @@
 import { View } from "./base-ui/view.js";
 import { StateFlow, Flow } from "./primitives/flow.js";
 import { Conversation } from "./conversation.js";
-import { CollectionBaseItem } from "./base-ui/base-collection.js";
 import { TopLevelNavigationItemBase } from "./nav-item.js";
 
 

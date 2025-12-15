@@ -1,10 +1,7 @@
-import { View } from "./base-ui/view.js";
-import { DiffableCollectionView } from "./base-ui/diffable-collection.js";
-import { CollectionBaseItem } from "./base-ui/base-collection.js";
-import { StateFlow, Context, Flow } from "./primitives/flow.js";
+import { StateFlow, Context } from "./primitives/flow.js";
 import { StackNavigationView } from "./base-ui/stack-navigation-view.js";
 import { TopBar, TopbarItem } from "./topbar.js";
-import { Conversation, ConversationModel, InboxItem } from "./conversation.js";
+import { ConversationModel } from "./conversation.js";
 import { ConversationView } from "./conversation-view.js";
 import { InboxView } from "./inbox-view.js";
 import { ConversationNavigationItem, InboxNavigationItem, TopLevelNavigationItemBase, TopLevelNavigationItemType } from "./nav-item.js";
@@ -75,25 +72,27 @@ function navStackToTopbarItems(
   return items;
 }
 
-
-function main() {
-  const navStackFlow = context.create_state_flow<Array<TopLevelNavigationItemBase>>([], "TopLevelNavStack");
-  const topbar = new TopBar(navStackFlow.map((navStack) => navStackToTopbarItems(navStackFlow, navStack)));
-  const rootNav = new StackNavigationView<TopLevelNavigationItemBase>(
-    navStackFlow,
-    topbar,
-    (item: TopLevelNavigationItemBase) => {
+class RootNav extends StackNavigationView<TopLevelNavigationItemBase> {
+  constructor(stackFlow: StateFlow<Array<TopLevelNavigationItemBase>>) {
+    const topbar = new TopBar(stackFlow.map((navStack) => navStackToTopbarItems(stackFlow, navStack)));
+    super(stackFlow, topbar, (item: TopLevelNavigationItemBase) => {
       switch (item.type) {
         case TopLevelNavigationItemType.Inbox:
           return new InboxView(
             ConversationModel.getInboxItems(context, (item as InboxNavigationItem).inboxType),
-            navStackFlow
+            stackFlow
         );
         case TopLevelNavigationItemType.Conversation:
-          return new ConversationView(ConversationModel.getConversation(context, item.collectionItemId), navStackFlow);
+          return new ConversationView(ConversationModel.getConversation(context, item.collectionItemId), stackFlow);
       }
-    }
-  );
+    });
+  }
+}
+customElements.define("root-nav", RootNav);
+
+function main() {
+  const navStackFlow = context.create_state_flow<Array<TopLevelNavigationItemBase>>([], "TopLevelNavStack");
+  const rootNav = new RootNav(navStackFlow);
 
   document.body.appendChild(rootNav);
   rootNav.style.position = "fixed";

@@ -96,7 +96,7 @@ export function differ<T extends CollectionBaseItem>(): (itemsArr: Array<T>) => 
 }
 
 /**
- * A practical implementation of a diffable collection.
+ * Automatically incrementally creates/deletes children.
  */
 export class DiffableCollectionView<T extends CollectionBaseItem>extends View<DiffResults<T>> {
   content: HTMLElement;
